@@ -14,7 +14,7 @@ let latestData = {
   lastWatered: new Date()
 };
 
-// Endpoint POST untuk menerima data
+// Endpoint POST untuk menerima data dari sensor
 app.post('/api/data', (req, res) => {
   const { soilMoisture } = req.body;
   latestData.soilMoisture = soilMoisture;
@@ -26,6 +26,26 @@ app.post('/api/data', (req, res) => {
 // Endpoint GET untuk mendapatkan data terbaru
 app.get('/api/latest-data', (req, res) => {
   res.json(latestData);
+});
+
+// Endpoint POST untuk toggle status pompa
+app.post('/api/toggle-pump', (req, res) => {
+  const { pumpStatus: newPumpStatus } = req.body;
+
+  // Update status pompa
+  latestData.pumpStatus = newPumpStatus;
+
+  // Kontrol hardware (misalnya menggunakan digitalWrite jika diperlukan)
+  if (newPumpStatus) {
+    // Aktifkan pompa (misalnya digitalWrite(D1, HIGH))
+    console.log('Pompa diaktifkan');
+  } else {
+    // Nonaktifkan pompa (misalnya digitalWrite(D1, LOW))
+    console.log('Pompa dinonaktifkan');
+  }
+
+  // Kirimkan respon sukses ke client
+  res.json({ success: true, pumpStatus: newPumpStatus });
 });
 
 // Mulai server
