@@ -14,12 +14,21 @@ let latestData = {
   lastWatered: new Date()
 };
 
-// Endpoint POST untuk menerima data
+// Endpoint POST untuk menerima data dari sensor
 app.post('/api/data', (req, res) => {
   const { soilMoisture } = req.body;
   latestData.soilMoisture = soilMoisture;
-  latestData.lastWatered = new Date();
-  console.log(`Data received: Soil Moisture=${soilMoisture}`);
+  
+  // Logika untuk mengaktifkan atau menonaktifkan pompa berdasarkan kelembapan tanah
+  if (soilMoisture < 30) {
+    latestData.pumpStatus = true;
+    latestData.lastWatered = new Date(); // Update waktu penyiraman terakhir
+    console.log(`Tanah kering. Pompa diaktifkan. Kelembapan Tanah=${soilMoisture}%`);
+  } else {
+    latestData.pumpStatus = false;
+    console.log(`Tanah cukup basah. Pompa dimatikan. Kelembapan Tanah=${soilMoisture}%`);
+  }
+
   res.status(200).send('Data received');
 });
 
@@ -28,11 +37,17 @@ app.get('/api/latest-data', (req, res) => {
   res.json(latestData);
 });
 
-// Endpoint POST untuk mengubah status pompa
+// Endpoint POST untuk mengubah status pompa secara manual
 app.post('/api/toggle-pump', (req, res) => {
   const { pumpStatus } = req.body;
   latestData.pumpStatus = pumpStatus;
-  console.log(`Pump status set to: ${pumpStatus}`);
+  
+  // Perbarui waktu penyiraman terakhir jika pompa dihidupkan
+  if (pumpStatus) {
+    latestData.lastWatered = new Date();
+  }
+
+  console.log(`Status pompa diubah secara manual menjadi: ${pumpStatus ? 'AKTIF' : 'NONAKTIF'}`);
   res.status(200).send('Pump status updated');
 });
 
@@ -43,5 +58,5 @@ app.get('/api/pump-status', (req, res) => {
 
 // Mulai server
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server berjalan di http://localhost:${port}`);
 });
