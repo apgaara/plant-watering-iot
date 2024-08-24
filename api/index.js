@@ -14,7 +14,7 @@ let latestData = {
   lastWatered: new Date()
 };
 
-// Endpoint POST untuk menerima data dari sensor
+// Endpoint POST untuk menerima data kelembaban tanah dari ESP8266
 app.post('/api/data', (req, res) => {
   const { soilMoisture } = req.body;
   latestData.soilMoisture = soilMoisture;
@@ -23,29 +23,21 @@ app.post('/api/data', (req, res) => {
   res.status(200).send('Data received');
 });
 
+// Endpoint POST untuk mengubah status pompa
+app.post('/api/toggle-pump', (req, res) => {
+  const { pumpStatus } = req.body;
+  latestData.pumpStatus = pumpStatus;
+  console.log(`Pump status changed: ${pumpStatus ? 'ON' : 'OFF'}`);
+  
+  // Di sini, Anda mungkin ingin menambahkan logika untuk mengontrol pompa berdasarkan pumpStatus.
+  // Misalnya, mengirimkan sinyal ke ESP8266 untuk menyalakan/mematikan pompa.
+
+  res.status(200).json({ pumpStatus: latestData.pumpStatus });
+});
+
 // Endpoint GET untuk mendapatkan data terbaru
 app.get('/api/latest-data', (req, res) => {
   res.json(latestData);
-});
-
-// Endpoint POST untuk toggle status pompa
-app.post('/api/toggle-pump', (req, res) => {
-  const { pumpStatus: newPumpStatus } = req.body;
-
-  // Update status pompa
-  latestData.pumpStatus = newPumpStatus;
-
-  // Kontrol hardware (misalnya menggunakan digitalWrite jika diperlukan)
-  if (newPumpStatus) {
-    // Aktifkan pompa (misalnya digitalWrite(D1, HIGH))
-    console.log('Pompa diaktifkan');
-  } else {
-    // Nonaktifkan pompa (misalnya digitalWrite(D1, LOW))
-    console.log('Pompa dinonaktifkan');
-  }
-
-  // Kirimkan respon sukses ke client
-  res.json({ success: true, pumpStatus: newPumpStatus });
 });
 
 // Mulai server
