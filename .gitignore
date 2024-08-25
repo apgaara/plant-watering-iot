@@ -43,3 +43,6 @@ api/.env
 #git
 .gitignore
 dist
+
+
+vite*

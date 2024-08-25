@@ -1,11 +1,21 @@
 require('dotenv').config();
-
 const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware untuk parsing JSON
 app.use(express.json());
+
+// Membuat atau membuka database SQLite
+const db = new sqlite3.Database('soil_moisture.db');
+
+// Membuat tabel jika belum ada
+db.run(`CREATE TABLE IF NOT EXISTS soil_moisture_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  moisture_level REAL,
+  date DATE
+)`);
 
 // Data penyimpanan
 let latestData = {
@@ -25,6 +35,19 @@ function controlRelay() {
     // Gantikan ini dengan perintah yang sesuai untuk mematikan relay
     console.log('Relay OFF (Pompa nonaktif)');
   }
+}
+
+// Fungsi untuk menyimpan data kelembapan ke database
+function saveMoistureToDB(soilMoisture) {
+  const date = new Date().toISOString().split('T')[0]; // format YYYY-MM-DD
+
+  db.run(`INSERT INTO soil_moisture_history (moisture_level, date) VALUES (?, ?)`,
+    [soilMoisture, date], function (err) {
+      if (err) {
+        return console.error('Error saving moisture data to database:', err.message);
+      }
+      console.log('Moisture data saved to database');
+    });
 }
 
 // Fungsi untuk memeriksa kelembapan tanah dan mengontrol pompa secara otomatis
@@ -52,6 +75,9 @@ function checkSoilMoisture() {
   }
 
   controlRelay(); // Kontrol relay sesuai status pompa
+
+  // Simpan kelembapan ke database
+  saveMoistureToDB(soilMoisture);
 }
 
 // Endpoint POST untuk menerima data dari sensor
@@ -74,7 +100,7 @@ app.get('/api/latest-data', (req, res) => {
 app.post('/api/toggle-pump', (req, res) => {
   const { pumpStatus } = req.body;
   latestData.pumpStatus = pumpStatus;
-  
+
   // Aktifkan mode manual dan simpan waktu override
   latestData.manualOverride = true;
   latestData.overrideTime = new Date();
@@ -89,6 +115,18 @@ app.post('/api/toggle-pump', (req, res) => {
 // Endpoint GET untuk mendapatkan status pompa
 app.get('/api/pump-status', (req, res) => {
   res.send(latestData.pumpStatus ? '1' : '0');
+});
+
+// Endpoint GET untuk mendapatkan riwayat kelembapan harian
+app.get('/api/history', (req, res) => {
+  db.all(`SELECT date, AVG(moisture_level) as avg_moisture
+          FROM soil_moisture_history
+          GROUP BY date`, [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
 });
 
 // Mulai server
