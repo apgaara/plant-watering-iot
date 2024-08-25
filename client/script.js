@@ -68,27 +68,41 @@ const ctx = document.getElementById('moistureChart').getContext('2d');
 const moistureChart = new Chart(ctx, {
   type: 'line',
   data: {
-      labels: [],
-      datasets: [{
-          label: 'Kelembaban Tanah (%)',
-          data: [],
-          borderColor: '#FFB6C1',
-          tension: 0.1,
-          fill: false
-      }]
+    labels: [],
+    datasets: [{
+      label: 'Kelembaban Tanah (%)',
+      data: [],
+      borderColor: '#FFB6C1',
+      tension: 0.1,
+      fill: false
+    }]
   },
   options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-          y: {
-              beginAtZero: true,
-              max: 100
-          }
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 100
       }
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `Kelembaban Tanah: ${context.raw}%`;
+          }
+        }
+      }
+    },
+    onClick: (event, elements) => {
+      if (elements.length) {
+        // Ambil data dari grafik atau panggil fungsi untuk menampilkan data ringkasan
+        fetchHistoryData();
+      }
+    }
   }
 });
-
 // Fungsi untuk menambahkan data ke grafik
 function addData(chart, label, data) {
   chart.data.labels.push(label);
@@ -101,6 +115,30 @@ function addData(chart, label, data) {
   }
   chart.update();
 }
+
+/// Existing code...
+
+// Fungsi untuk mengambil data terbaru dari server
+async function fetchData() {
+  try {
+      const response = await fetch('/api/latest-data');
+      const data = await response.json();
+
+      // Update nilai kelembaban tanah dan waktu terakhir disiram
+      document.getElementById('soilMoisture').textContent = data.soilMoisture + '%';
+      document.getElementById('lastWatered').textContent = new Date(data.lastWatered).toLocaleString();
+
+      // Update status pompa di UI
+      updatePumpStatus(data.pumpStatus);
+
+      // Tambahkan data terbaru ke grafik kelembaban
+      addData(moistureChart, new Date().toLocaleTimeString(), data.soilMoisture);
+  } catch (error) {
+      console.error('Error fetching data:', error);
+  }
+}
+
+// ... (rest of the existing functions)
 
 // Fungsi untuk mendapatkan data riwayat kelembaban harian
 async function fetchHistoryData() {
@@ -120,18 +158,60 @@ async function fetchHistoryData() {
                   label: 'Rata-rata Kelembaban Harian (%)',
                   data: moistureData,
                   borderColor: '#FFB6C1',
-                  tension: 0.1,
-                  fill: false
+                  backgroundColor: 'rgba(255, 182, 193, 0.1)',
+                  borderWidth: 2,
+                  pointRadius: 3,
+                  pointBackgroundColor: '#FFB6C1',
+                  pointBorderColor: '#FFF',
+                  pointHoverRadius: 5,
+                  fill: true,
+                  tension: 0.4
               }]
           },
           options: {
               responsive: true,
               maintainAspectRatio: false,
               scales: {
+                  x: {
+                      type: 'time',
+                      time: {
+                          unit: 'day',
+                          displayFormats: {
+                              day: 'MMM d'
+                          }
+                      },
+                      title: {
+                          display: true,
+                          text: 'Tanggal'
+                      }
+                  },
                   y: {
                       beginAtZero: true,
-                      max: 100
+                      max: 100,
+                      title: {
+                          display: true,
+                          text: 'Kelembaban Tanah (%)'
+                      }
                   }
+              },
+              plugins: {
+                  legend: {
+                      display: false
+                  },
+                  tooltip: {
+                      mode: 'index',
+                      intersect: false,
+                      callbacks: {
+                          label: function(context) {
+                              return `Kelembaban: ${context.parsed.y.toFixed(2)}%`;
+                          }
+                      }
+                  }
+              },
+              interaction: {
+                  mode: 'nearest',
+                  axis: 'x',
+                  intersect: false
               }
           }
       });
@@ -142,6 +222,8 @@ async function fetchHistoryData() {
 
 // Panggil fetchHistoryData saat halaman dimuat
 fetchHistoryData();
+
+// ... (rest of the existing code)
 
 // Tambahkan event listener untuk tombol
 document.getElementById('togglePump').addEventListener('click', togglePump);

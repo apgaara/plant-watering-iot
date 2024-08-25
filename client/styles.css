@@ -101,3 +101,23 @@ h1 {
   background-color: #FF6347;
   color: white;
 }
+
+
+.history-card {
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.history-card h2 {
+  color: var(--secondary-color);
+  margin-top: 0;
+  text-align: center;
+}
+
+.history-card .chart-container {
+  height: 400px;
+  margin-top: 20px;
+}
