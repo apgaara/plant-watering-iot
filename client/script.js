@@ -28,27 +28,34 @@ function updatePumpStatus(status) {
 
 // Fungsi untuk mengirimkan permintaan untuk mengubah status pompa
 async function togglePump() {
-  try {
+    try {
       const currentStatus = document.getElementById('pumpStatus').textContent === 'AKTIF';
-      const newStatus = !currentStatus; // Toggle status
-
+      const newStatus = !currentStatus;
+  
       const response = await fetch('/api/toggle-pump', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ pumpStatus: newStatus })
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ pumpStatus: newStatus })
       });
-
+  
       if (response.ok) {
-          updatePumpStatus(newStatus);
+        document.getElementById('pumpStatus').textContent = newStatus ? 'AKTIF' : 'NONAKTIF';
+        document.getElementById('pumpStatus').className = newStatus ? 'status-on' : 'status-off';
+  
+        // Tambahkan notifikasi bahwa pompa akan tetap menyala selama 1 menit
+        if (newStatus) {
+          alert('Pompa akan tetap menyala selama 1 menit sebelum kembali ke mode otomatis.');
+        }
       } else {
-          console.error('Failed to toggle pump status.');
+        console.error('Failed to toggle pump status.');
       }
-  } catch (error) {
+    } catch (error) {
       console.error('Error toggling pump status:', error);
+    }
   }
-}
+  
 
 // Panggil fetchData secara berkala dan satu kali pada awal
 fetchData();

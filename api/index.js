@@ -11,15 +11,37 @@ app.use(express.json());
 let latestData = {
   soilMoisture: 0,
   pumpStatus: false,
-  lastWatered: new Date()
+  lastWatered: new Date(),
+  manualOverride: false, // Menambahkan variabel untuk mode manual
+  overrideTime: null // Waktu ketika manual override diaktifkan
 };
 
-// Endpoint POST untuk menerima data dari sensor
-app.post('/api/data', (req, res) => {
-  const { soilMoisture } = req.body;
-  latestData.soilMoisture = soilMoisture;
-  
-  // Logika untuk mengaktifkan atau menonaktifkan pompa berdasarkan kelembapan tanah
+// Fungsi untuk mengendalikan relay berdasarkan status pompa
+function controlRelay() {
+  if (latestData.pumpStatus) {
+    // Gantikan ini dengan perintah yang sesuai untuk menyalakan relay
+    console.log('Relay ON (Pompa aktif)');
+  } else {
+    // Gantikan ini dengan perintah yang sesuai untuk mematikan relay
+    console.log('Relay OFF (Pompa nonaktif)');
+  }
+}
+
+// Fungsi untuk memeriksa kelembapan tanah dan mengontrol pompa secara otomatis
+function checkSoilMoisture() {
+  const { soilMoisture, manualOverride, overrideTime } = latestData;
+  const now = new Date();
+
+  // Periksa jika mode manual sedang aktif dan dalam batas waktu override
+  if (manualOverride && (now - overrideTime < 60000)) { // 60,000 ms = 1 menit
+    console.log(`Pompa diaktifkan secara manual dan tetap menyala. Kelembapan Tanah=${soilMoisture}%`);
+    controlRelay(); // Kontrol relay sesuai status pompa
+    return;
+  }
+
+  // Reset mode manual setelah 1 menit
+  latestData.manualOverride = false;
+
   if (soilMoisture < 30) {
     latestData.pumpStatus = true;
     latestData.lastWatered = new Date(); // Update waktu penyiraman terakhir
@@ -28,6 +50,17 @@ app.post('/api/data', (req, res) => {
     latestData.pumpStatus = false;
     console.log(`Tanah cukup basah. Pompa dimatikan. Kelembapan Tanah=${soilMoisture}%`);
   }
+
+  controlRelay(); // Kontrol relay sesuai status pompa
+}
+
+// Endpoint POST untuk menerima data dari sensor
+app.post('/api/data', (req, res) => {
+  const { soilMoisture } = req.body;
+  latestData.soilMoisture = soilMoisture;
+
+  // Panggil fungsi untuk memeriksa kelembapan tanah
+  checkSoilMoisture();
 
   res.status(200).send('Data received');
 });
@@ -42,10 +75,12 @@ app.post('/api/toggle-pump', (req, res) => {
   const { pumpStatus } = req.body;
   latestData.pumpStatus = pumpStatus;
   
-  // Perbarui waktu penyiraman terakhir jika pompa dihidupkan
-  if (pumpStatus) {
-    latestData.lastWatered = new Date();
-  }
+  // Aktifkan mode manual dan simpan waktu override
+  latestData.manualOverride = true;
+  latestData.overrideTime = new Date();
+
+  // Kontrol relay sesuai status pompa
+  controlRelay();
 
   console.log(`Status pompa diubah secara manual menjadi: ${pumpStatus ? 'AKTIF' : 'NONAKTIF'}`);
   res.status(200).send('Pump status updated');
