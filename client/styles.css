@@ -121,3 +121,31 @@ h1 {
   height: 400px;
   margin-top: 20px;
 }
+
+/* Footer Styling */
+footer {
+  background-color: #f8f9fa;
+  padding: 20px;
+  text-align: center;
+  border-top: 1px solid #ddd;
+  position: relative;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.footer-image {
+  max-width: 150px;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+footer p {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
