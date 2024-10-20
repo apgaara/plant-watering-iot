@@ -2,7 +2,7 @@ FROM node:alpine
 WORKDIR /usr/src/app
 COPY packages*.json ./
 RUN npm install
-COPY ../api .
+COPY . .
 EXPOSE 3000
 
 #run server
