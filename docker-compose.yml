@@ -1,23 +1,29 @@
 version: '3'
 services:
   api:
-    build: .
-    container_name: api_server
+    build: ./api
+    container_name: api-server
     ports:
       - "3000:3000"
     volumes:
-      - .:/app
-    command: ["node", "api/index.js"]
+      - ./app:/usr/src/app
     depends_on:
-      - client
+      - mongo
 
   client:
     build:
       context: ./client
-    container_name: client_server
+    container_name: web-client
     ports:
       - "8080:80"
     volumes:
       - ./client:/usr/share/nginx/html
     depends_on:
       - api
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo-data:/data/db
