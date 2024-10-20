@@ -35,12 +35,12 @@ jobs:
 
     - name: Build and push API Docker image
       run: |
-        docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/plant-watering-api:latest -f Dockerfile .
+        docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/plant-watering-api:latest -f api/Dockerfile
         docker push ${{ secrets.DOCKER_HUB_USERNAME }}/plant-watering-api:latest
 
     - name: Build and push Client Docker image
       run: |
-        docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/plant-watering-client:latest -f client/Dockerfile ./client
+        docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/plant-watering-client:latest -f client/Dockerfile 
         docker push ${{ secrets.DOCKER_HUB_USERNAME }}/plant-watering-client:latest
 
   deploy:
