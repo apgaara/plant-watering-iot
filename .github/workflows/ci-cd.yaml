@@ -45,7 +45,7 @@ jobs:
     steps:
     - name: Deploy API and Client Containers
       run: |
-        ssh -o StrictHostChecking=no -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
         docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/plant-watering-api:latest
         docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/plant-watering-client:latest
 
